@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Warm Knit — Каталог</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="index.html">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M14 38c9-18 27-24 36-12 9 12-2 33-20 30-13-2-20-9-16-18Z" fill="rgba(233,182,199,.9)"/>
+          <path d="M22 40c5-12 17-16 22-8 5 8-2 22-13 20-8-2-12-6-9-12Z" fill="rgba(184,169,201,.55)"/>
+          <path d="M12 22c8 0 16-7 20-12 6 7 14 12 20 12" stroke="rgba(45,36,33,.55)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="title">
+          <strong>Warm Knit</strong>
+          <span>каталог • нежная палитра</span>
+        </div>
+      </a>
+
+      <nav class="links">
+        <a href="shop.html">Каталог</a>
+        <a href="about.html">О бренде</a>
+        <a href="contact.html">Контакты</a>
+      </nav>
+
+      <div class="actions">
+        <a class="btn small" href="index.html">Главная</a>
+        <button class="icon-btn badge" id="cartBtn" aria-label="cart">
+          <svg class="icon" viewBox="0 0 24 24" fill="none">
+            <path d="M7 7h14l-2 10H8L6 3H3" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill="rgba(45,36,33,.75)"/>
+          </svg>
+          <span id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="section">
+    <div class="card pad reveal">
+      <div class="kicker">Коллекция</div>
+      <h1 class="h1" style="margin-top:8px">Каталог</h1>
+      <p class="p">Фильтры, поиск и сортировка — всё уже подключено на JS. Дальше можно добавить реальные фото и оплату.</p>
+
+      <div class="toolbar" style="margin-top:16px">
+        <div class="search">
+          <svg class="icon" viewBox="0 0 24 24" fill="none">
+            <path d="M21 21l-4.3-4.3M10.8 18.1a7.3 7.3 0 1 1 0-14.6 7.3 7.3 0 0 1 0 14.6Z" stroke="rgba(45,36,33,.7)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" placeholder="Поиск: свитер, шапка, premium..." />
+        </div>
+
+        <div class="filters">
+          <select class="select" id="categorySelect">
+            <option value="all">Все категории</option>
+            <option value="sweaters">Свитеры</option>
+            <option value="cardigans">Кардиганы</option>
+            <option value="hats">Шапки</option>
+            <option value="accessories">Аксессуары</option>
+          </select>
+
+          <select class="select" id="colorSelect">
+            <option value="all">Все цвета</option>
+            <option value="rose">Розовый</option>
+            <option value="milk">Молочный</option>
+            <option value="caramel">Карамель</option>
+            <option value="lav">Лаванда</option>
+          </select>
+
+          <select class="select" id="sortSelect">
+            <option value="featured">Рекомендовано</option>
+            <option value="price-asc">Цена ↑</option>
+            <option value="price-desc">Цена ↓</option>
+            <option value="name">По названию</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="products" id="productGrid" style="margin-top:16px"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="small">Warm Knit • каталог • demo</div>
+      <div class="small" style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="about.html">О бренде</a>
+        <a href="contact.html">Контакты</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Cart Drawer -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer">
+  <div class="head">
+    <h4>Корзина</h4>
+    <button class="icon-btn" id="cartClose" aria-label="close cart">
+      <svg class="icon" viewBox="0 0 24 24" fill="none">
+        <path d="M6 6l12 12M18 6L6 18" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="content">
+    <div id="cartEmpty" class="card pad" style="display:none">
+      <div class="kicker">Пусто</div>
+      <p class="p" style="margin:10px 0 0">Добавь что-нибудь милое ✨</p>
+    </div>
+    <div id="cartList"></div>
+  </div>
+  <div class="foot">
+    <div class="total">
+      <span>Итого</span>
+      <b id="cartTotal">0 MDL</b>
+    </div>
+    <button class="btn primary" id="checkoutBtn" type="button" style="width:100%">Оформить (заглушка)</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast">Добавлено</div>
+<script src="app.js"></script>
+</body>
+</html>

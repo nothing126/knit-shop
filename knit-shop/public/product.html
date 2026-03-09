@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Warm Knit — Товар</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="index.html">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M14 38c9-18 27-24 36-12 9 12-2 33-20 30-13-2-20-9-16-18Z" fill="rgba(233,182,199,.9)"/>
+          <path d="M22 40c5-12 17-16 22-8 5 8-2 22-13 20-8-2-12-6-9-12Z" fill="rgba(184,169,201,.55)"/>
+          <path d="M12 22c8 0 16-7 20-12 6 7 14 12 20 12" stroke="rgba(45,36,33,.55)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="title">
+          <strong>Warm Knit</strong>
+          <span>страница товара</span>
+        </div>
+      </a>
+
+      <nav class="links">
+        <a href="shop.html">Каталог</a>
+        <a href="about.html">О бренде</a>
+        <a href="contact.html">Контакты</a>
+      </nav>
+
+      <div class="actions">
+        <a class="btn small" href="shop.html">← Назад</a>
+        <button class="icon-btn badge" id="cartBtn" aria-label="cart">
+          <svg class="icon" viewBox="0 0 24 24" fill="none">
+            <path d="M7 7h14l-2 10H8L6 3H3" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill="rgba(45,36,33,.75)"/>
+          </svg>
+          <span id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="productRoot">
+  <section class="section">
+    <div class="split">
+      <div class="gallery reveal">
+        <div class="main" aria-hidden="true"></div>
+        <div class="strip" aria-hidden="true">
+          <div class="ph"></div><div class="ph"></div><div class="ph"></div>
+        </div>
+      </div>
+
+      <div class="card pad reveal">
+        <div class="kicker" id="pTag">Handmade</div>
+        <h1 class="h2" id="pName">Название</h1>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-family:var(--serif);font-size:26px" id="pPrice">0 MDL</div>
+          <div class="pill" title="chosen"><span class="dot"></span><span id="pChosen" style="font-size:13px;color:rgba(45,36,33,.78)"></span></div>
+        </div>
+
+        <p class="p" id="pDesc" style="margin-top:14px"></p>
+
+        <div class="form-row" style="margin-top:14px">
+          <div class="field">
+            <label>Размер</label>
+            <select class="select" id="pSize">
+              <option>One size</option>
+              <option>XS/S</option>
+              <option>M/L</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Цвет</label>
+            <select class="select" id="pColor">
+              <option>Пудровый</option>
+              <option>Молочный</option>
+              <option>Карамель</option>
+              <option>Лаванда</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+          <button class="btn primary" id="pAdd" type="button">В корзину</button>
+          <button class="btn" id="pBuyNow" type="button">Купить сейчас</button>
+        </div>
+
+        <hr class="sep"/>
+        <div class="split">
+          <div>
+            <div class="kicker">Категория</div>
+            <div style="margin-top:6px;font-size:14px;color:rgba(45,36,33,.78)" id="pCat"></div>
+          </div>
+          <div>
+            <div class="kicker">Уход</div>
+            <div style="margin-top:6px;font-size:14px;color:rgba(45,36,33,.78)" id="pCare"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card pad reveal">
+      <div class="toolbar">
+        <div>
+          <div class="kicker">Рекомендации</div>
+          <h2 class="h2" style="margin-top:8px">Сочетается идеально</h2>
+        </div>
+        <a class="btn small" href="shop.html">Каталог →</a>
+      </div>
+      <div class="products" id="recommendGrid" style="margin-top:16px"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="small">Warm Knit • product page • demo</div>
+      <div class="small"><a href="contact.html">Задать вопрос</a></div>
+    </div>
+  </div>
+</footer>
+
+<!-- Cart Drawer -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer">
+  <div class="head">
+    <h4>Корзина</h4>
+    <button class="icon-btn" id="cartClose" aria-label="close cart">
+      <svg class="icon" viewBox="0 0 24 24" fill="none">
+        <path d="M6 6l12 12M18 6L6 18" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="content">
+    <div id="cartEmpty" class="card pad" style="display:none">
+      <div class="kicker">Пусто</div>
+      <p class="p" style="margin:10px 0 0">Добавь что-нибудь милое ✨</p>
+    </div>
+    <div id="cartList"></div>
+  </div>
+  <div class="foot">
+    <div class="total">
+      <span>Итого</span>
+      <b id="cartTotal">0 MDL</b>
+    </div>
+    <button class="btn primary" id="checkoutBtn" type="button" style="width:100%">Оформить (заглушка)</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast">Добавлено</div>
+<script src="app.js"></script>
+</body>
+</html>
