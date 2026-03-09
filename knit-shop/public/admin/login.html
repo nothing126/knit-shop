@@ -1,10 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • Вход</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"></div>
+          <b>Knit Admin</b>
+        </div>
+        <div class="nav"><a href="/">На сайт</a></div>
+      </div>
+
+      <div class="card" style="max-width: 520px; margin: 22px auto">
+        <h2 style="margin: 0 0 10px">Вход</h2>
+        <div class="grid">
+          <div class="field">
+            <label>Логин</label>
+            <input id="u" placeholder="admin" />
+          </div>
+          <div class="field">
+            <label>Пароль</label>
+            <input id="p" type="password" placeholder="••••••" />
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 14px">
+          <button id="go" class="btn">Войти</button>
+        </div>
+        <div id="msg" class="notice"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { api, setToken, qs } from "/admin/admin.js";
+
+      qs("#go").onclick = async () => {
+        const msg = qs("#msg");
+        msg.textContent = "";
+        msg.classList.remove("error");
+        try {
+          const username = qs("#u").value.trim();
+          const password = qs("#p").value;
+          const r = await api("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          setToken(r.token);
+          location.href = "/admin/products.html";
+        } catch (e) {
+          const msg = qs("#msg");
+          msg.textContent = e.message;
+          msg.classList.add("error");
+        }
+      };
+    </script>
+  </body>
 </html>

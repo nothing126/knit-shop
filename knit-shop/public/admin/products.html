@@ -1,10 +1,239 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • Товары</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"></div>
+          <b>Knit Admin</b>
+        </div>
+        <div class="nav">
+          <a class="active" href="/admin/products.html">Товары</a>
+          <a href="/admin/categories.html">Категории</a>
+          <a id="out" href="#">Выйти</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <input
+              id="q"
+              placeholder="Поиск..."
+              style="
+                padding: 12px;
+                border-radius: 14px;
+                border: 1px solid var(--line);
+                width: 260px;
+              "
+            />
+
+            <select
+              id="cat"
+              style="
+                padding: 12px;
+                border-radius: 14px;
+                border: 1px solid var(--line);
+              "
+            >
+              <option value="">Все категории</option>
+            </select>
+
+            <select
+              id="stock"
+              style="
+                padding: 12px;
+                border-radius: 14px;
+                border: 1px solid var(--line);
+              "
+            >
+              <option value="">Любое наличие</option>
+              <option value="1">В наличии</option>
+              <option value="0">Нет в наличии</option>
+            </select>
+
+            <button id="reload" class="btn secondary">Обновить</button>
+          </div>
+
+          <a class="btn" href="/admin/product-edit.html">+ Добавить товар</a>
+        </div>
+
+        <table class="table" style="margin-top: 10px">
+          <thead>
+            <tr>
+              <th>Товар</th>
+              <th>Категория</th>
+              <th>Цена</th>
+              <th>Наличие</th>
+              <th>На сайте</th>
+              <th>Выбор недели</th>
+              <th style="text-align: right">Действия</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+
+        <div id="msg" class="notice"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { api, mustAuth, logout, qs } from "/admin/admin.js";
+      mustAuth();
+      qs("#out").onclick = (e) => {
+        e.preventDefault();
+        logout();
+      };
+
+      async function loadCats() {
+        const cats = await api("/api/categories"); // старый маршрут
+        const sel = qs("#cat");
+        sel.innerHTML =
+          `<option value="">Все категории</option>` +
+          cats
+            .map((c) => `<option value="${c.id}">${c.name}</option>`)
+            .join("");
+      }
+
+      async function load() {
+        const msg = qs("#msg");
+        msg.textContent = "";
+        msg.classList.remove("error");
+
+        const q = qs("#q").value.trim();
+        const categoryId = qs("#cat").value;
+        const inStock = qs("#stock").value;
+
+        const params = new URLSearchParams();
+        if (q) params.set("q", q);
+        if (categoryId) params.set("categoryId", categoryId);
+        if (inStock !== "") params.set("inStock", inStock);
+
+        const items = await api("/api/products?" + params.toString());
+
+        const tbody = qs("#rows");
+        tbody.innerHTML = items
+          .map(
+            (p) => `
+      <tr data-id="${p.id}">
+        <td style="display:flex; align-items:center; gap:10px;">
+          <img class="thumb"
+               src="${p.imageUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Crect width='100%25' height='100%25' fill='%23ffe6ee'/%3E%3C/svg%3E"}"/>
+          <div>
+            <div style="font-weight:800">${p.title}</div>
+            <div class="notice">ID: ${p.id} • Кол-во: ${p.quantity}</div>
+          </div>
+        </td>
+
+        <td>${p.categoryName || "—"}</td>
+        <td><b>${p.price}</b> MDL</td>
+        <td>${p.inStock ? "В наличии" : "Нет"}</td>
+        <td>${p.isActive ? "Показывается" : "Скрыт"}</td>
+
+        <td>
+          <div class="switch ${Number(p.isWeekPick) ? "on" : ""}"
+               title="Выбор недели"
+               data-week="${Number(p.isWeekPick) ? 0 : 1}"></div>
+        </td>
+
+        <td style="text-align:right;">
+          <div class="actions">
+            <a class="small" href="/admin/product-edit.html?id=${p.id}">
+              Редактировать
+            </a>
+
+            <button class="small" data-toggle="${p.isActive ? 0 : 1}">
+              ${p.isActive ? "Скрыть" : "Показать"}
+            </button>
+
+            <button class="small" data-del="1">
+              Удалить
+            </button>
+          </div>
+        </td>
+      </tr>
+    `,
+          )
+          .join("");
+
+        tbody.querySelectorAll("tr").forEach((tr) => {
+          const id = tr.getAttribute("data-id");
+
+          // скрыть / показать
+          tr.querySelector("[data-toggle]").onclick = async (e) => {
+            const to = e.target.getAttribute("data-toggle");
+            try {
+              await api(`/api/products/${id}/active`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isActive: to }),
+              });
+              await load();
+            } catch (e) {
+              const msg = qs("#msg");
+              msg.textContent = e.message;
+              msg.classList.add("error");
+            }
+          };
+
+          // выбор недели (тумблер)
+          const weekSwitch = tr.querySelector("[data-week]");
+          if (weekSwitch) {
+            weekSwitch.onclick = async (e) => {
+              const to = e.currentTarget.getAttribute("data-week");
+              try {
+                await api(`/api/products/${id}/week-pick`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ isWeekPick: to }),
+                });
+                await load();
+              } catch (e) {
+                const msg = qs("#msg");
+                msg.textContent = e.message;
+                msg.classList.add("error");
+              }
+            };
+          }
+
+          // удалить
+          tr.querySelector("[data-del]").onclick = async () => {
+            if (!confirm("Удалить товар?")) return;
+            try {
+              await api(`/api/products/${id}`, { method: "DELETE" });
+              await load();
+            } catch (e) {
+              const msg = qs("#msg");
+              msg.textContent = e.message;
+              msg.classList.add("error");
+            }
+          };
+        });
+      }
+
+      qs("#reload").onclick = load;
+      qs("#q").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") load();
+      });
+      qs("#cat").onchange = load;
+      qs("#stock").onchange = load;
+
+      await loadCats();
+      await load();
+    </script>
+  </body>
 </html>

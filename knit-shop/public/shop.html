@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Warm Knit — Каталог</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title data-i18n="shop_title">Magazin</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
 </head>
 <body>
 <header class="header">
   <div class="container">
     <div class="nav">
-      <a class="brand" href="index.html">
+      <a class="brand" href="index.html" aria-label="home">
         <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
           <path d="M14 38c9-18 27-24 36-12 9 12-2 33-20 30-13-2-20-9-16-18Z" fill="rgba(233,182,199,.9)"/>
           <path d="M22 40c5-12 17-16 22-8 5 8-2 22-13 20-8-2-12-6-9-12Z" fill="rgba(184,169,201,.55)"/>
@@ -18,93 +18,115 @@
         </svg>
         <div class="title">
           <strong>Warm Knit</strong>
-          <span>каталог • нежная палитра</span>
+          <span data-i18n="brand_subtitle">handmade knitwear • small batches</span>
         </div>
       </a>
 
-      <nav class="links">
-        <a href="shop.html">Каталог</a>
-        <a href="about.html">О бренде</a>
-        <a href="contact.html">Контакты</a>
+      <nav class="links" aria-label="main">
+        <a href="shop.html" class="active" data-i18n="nav_catalog">Catalog</a>
+        <a href="about.html" data-i18n="nav_about">Despre brand</a>
+        <a href="contact.html" data-i18n="nav_contact">Contacte</a>
       </nav>
 
       <div class="actions">
-        <a class="btn small" href="index.html">Главная</a>
-        <button class="icon-btn badge" id="cartBtn" aria-label="cart">
+        <select id="langSelect" class="select" aria-label="Language">
+          <option value="ro">RO</option>
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+        </select>
+
+        <a class="pill" href="about.html" title="About">
+          <span class="dot"></span>
+          <span style="font-size:13px;color:rgba(45,36,33,.78)" data-i18n="nav_about">Despre brand</span>
+        </a>
+
+                <button class="icon-btn burger" id="burgerBtn" aria-label="menu">
           <svg class="icon" viewBox="0 0 24 24" fill="none">
-            <path d="M7 7h14l-2 10H8L6 3H3" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 7h14M5 12h14M5 17h14" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <button class="icon-btn badge" id="cartBtn" type="button" aria-label="Cart">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 7h14l-2 10H8L6 3H3" stroke="rgba(45,36,33,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill="rgba(45,36,33,.75)"/>
           </svg>
-          <span id="cartBadge">0</span>
+          <span id="cartBadge" style="display:none">0</span>
         </button>
+      </div>
+    </div>
+
+    <div id="mobileLinks" class="card mobile-links">
+      <div class="mobile-links-row">
+        <a class="btn small" href="shop.html" data-i18n="nav_catalog">Catalog</a>
+        <a class="btn small" href="about.html" data-i18n="nav_about">Despre brand</a>
+        <a class="btn small" href="contact.html" data-i18n="nav_contact">Contacte</a>
       </div>
     </div>
   </div>
 </header>
 
 <main class="container">
+  <section class="section" style="padding-top:18px">
+    <div class="card pad reveal" id="shopPage">
+      <div class="kicker" data-i18n="shop_kicker">Colecție</div>
+      <h1 class="h2" style="margin-top:10px" data-i18n="shop_title">Magazin</h1>
+      <p class="p" style="margin-top:10px" data-i18n="shop_desc">
+        Alege lucruri tricotate făcute cu grijă.
+      </p>
+    </div>
+  </section>
+
   <section class="section">
     <div class="card pad reveal">
-      <div class="kicker">Коллекция</div>
-      <h1 class="h1" style="margin-top:8px">Каталог</h1>
-      <p class="p">Фильтры, поиск и сортировка — всё уже подключено на JS. Дальше можно добавить реальные фото и оплату.</p>
-
-      <div class="toolbar" style="margin-top:16px">
-        <div class="search">
-          <svg class="icon" viewBox="0 0 24 24" fill="none">
-            <path d="M21 21l-4.3-4.3M10.8 18.1a7.3 7.3 0 1 1 0-14.6 7.3 7.3 0 0 1 0 14.6Z" stroke="rgba(45,36,33,.7)" stroke-width="2" stroke-linecap="round"/>
+      <div class="toolbar">
+        <div class="search" role="search">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="rgba(45,36,33,.55)" stroke-width="2"/>
+            <path d="M16.5 16.5 21 21" stroke="rgba(45,36,33,.55)" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <input id="searchInput" placeholder="Поиск: свитер, шапка, premium..." />
+          <input id="q" data-i18n-placeholder="search_placeholder" placeholder="Search…"/>
         </div>
 
         <div class="filters">
-          <select class="select" id="categorySelect">
-            <option value="all">Все категории</option>
-            <option value="sweaters">Свитеры</option>
-            <option value="cardigans">Кардиганы</option>
-            <option value="hats">Шапки</option>
-            <option value="accessories">Аксессуары</option>
+          <select id="category" class="select" aria-label="Category"></select>
+
+          <label class="pill" style="gap:8px; cursor:pointer">
+            <input id="inStock" type="checkbox" style="accent-color: var(--rose)"/>
+            <span style="font-size:13px;color:rgba(45,36,33,.78)" data-i18n="in_stock_only">In stock only</span>
+          </label>
+
+          <select id="sort" class="select" aria-label="Sort">
+            <option value="new" data-i18n="sort_new">New</option>
+            <option value="price_asc" data-i18n="sort_price_asc">Price ↑</option>
+            <option value="price_desc" data-i18n="sort_price_desc">Price ↓</option>
           </select>
 
-          <select class="select" id="colorSelect">
-            <option value="all">Все цвета</option>
-            <option value="rose">Розовый</option>
-            <option value="milk">Молочный</option>
-            <option value="caramel">Карамель</option>
-            <option value="lav">Лаванда</option>
-          </select>
-
-          <select class="select" id="sortSelect">
-            <option value="featured">Рекомендовано</option>
-            <option value="price-asc">Цена ↑</option>
-            <option value="price-desc">Цена ↓</option>
-            <option value="name">По названию</option>
-          </select>
+          <button id="resetFilters" class="btn small" type="button" data-i18n="reset">Reset</button>
         </div>
       </div>
-
-      <div class="products" id="productGrid" style="margin-top:16px"></div>
     </div>
+  </section>
+
+  <section class="section">
+    <div id="empty" class="card pad" style="display:none" data-i18n="empty_text">Add something cute ✨</div>
+    <div id="grid" class="products"></div>
   </section>
 </main>
 
 <footer class="footer">
   <div class="container">
     <div class="row">
-      <div class="small">Warm Knit • каталог • demo</div>
-      <div class="small" style="display:flex;gap:12px;flex-wrap:wrap">
-        <a href="about.html">О бренде</a>
-        <a href="contact.html">Контакты</a>
-      </div>
+      <div class="small">© <span data-year></span> Warm Knit</div>
+      <div class="small">Handmade • Cozy • Soft</div>
     </div>
   </div>
 </footer>
 
-<!-- Cart Drawer -->
 <div class="drawer-backdrop" id="drawerBackdrop"></div>
 <aside class="drawer">
   <div class="head">
-    <h4>Корзина</h4>
+    <h4 data-i18n="cart">Coș</h4>
     <button class="icon-btn" id="cartClose" aria-label="close cart">
       <svg class="icon" viewBox="0 0 24 24" fill="none">
         <path d="M6 6l12 12M18 6L6 18" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
@@ -113,21 +135,21 @@
   </div>
   <div class="content">
     <div id="cartEmpty" class="card pad" style="display:none">
-      <div class="kicker">Пусто</div>
-      <p class="p" style="margin:10px 0 0">Добавь что-нибудь милое ✨</p>
+      <div class="kicker" data-i18n="empty_kicker">Gol</div>
+      <p class="p" style="margin:10px 0 0" data-i18n="empty_text"></p>
     </div>
     <div id="cartList"></div>
   </div>
   <div class="foot">
     <div class="total">
-      <span>Итого</span>
+      <span data-i18n="total">Total</span>
       <b id="cartTotal">0 MDL</b>
     </div>
-    <button class="btn primary" id="checkoutBtn" type="button" style="width:100%">Оформить (заглушка)</button>
+    <button class="btn primary" id="checkoutBtn" type="button" style="width:100%" data-i18n="checkout">Finalizează (demo)</button>
   </div>
 </aside>
 
-<div class="toast" id="toast">Добавлено</div>
-<script src="app.js"></script>
+<div class="toast" id="toast">—</div>
+<script src="/js/app.js"></script>
 </body>
 </html>

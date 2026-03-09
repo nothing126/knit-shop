@@ -1,10 +1,234 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • Выбор недели</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"></div>
+          <b>Knit Admin</b>
+        </div>
+        <div class="nav">
+          <a href="/admin/products.html">Товары</a>
+          <a href="/admin/categories.html">Категории</a>
+          <a class="active" href="/admin/week-picks.html">Выбор недели</a>
+          <a id="out" href="#">Выйти</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin: 0 0 12px">Выбор недели</h2>
+
+        <div class="grid">
+          <div class="field">
+            <label>Заголовок</label>
+            <input id="w_title" placeholder="Выбор недели" />
+          </div>
+
+          <div class="field">
+            <label>Подзаголовок</label>
+            <input
+              id="w_subtitle"
+              placeholder="Например: Самые уютные вещи этой недели"
+            />
+          </div>
+
+          <div class="field">
+            <label>Начало недели</label>
+            <input id="w_start" type="date" />
+          </div>
+
+          <div class="field">
+            <label>Конец недели</label>
+            <input id="w_end" type="date" />
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1">
+            <label>Товары (выбери несколько)</label>
+            <select
+              id="w_products"
+              multiple
+              size="10"
+              style="width: 100%; padding: 10px; border-radius: 10px"
+            ></select>
+            <div class="hint">
+              Зажми Ctrl (Windows) / Cmd (Mac), чтобы выбрать несколько.
+            </div>
+          </div>
+
+          <div class="field">
+            <label style="display: flex; gap: 10px; align-items: center">
+              <input id="w_active" type="checkbox" />
+              Активная неделя (покажется на главной)
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 14px">
+          <button id="save" class="btn">Сохранить</button>
+          <button id="new" class="btn btn-ghost">Создать новую</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 14px">
+        <h3 style="margin: 0 0 10px">История</h3>
+        <div id="list"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import {
+        API,
+        authHeaders,
+        requireAuth,
+        logout,
+      } from "/admin/admin.api.js";
+
+      requireAuth();
+      document.getElementById("out").onclick = logout;
+
+      let currentId = null;
+      let products = [];
+      let picks = [];
+
+      const el = (id) => document.getElementById(id);
+      const selProducts = el("w_products");
+
+      function option(p) {
+        const o = document.createElement("option");
+        o.value = String(p.id);
+        o.textContent = `#${p.id} — ${p.title} (${p.price})`;
+        return o;
+      }
+
+      function selectedIds() {
+        return Array.from(selProducts.selectedOptions).map((o) =>
+          Number(o.value),
+        );
+      }
+
+      function setSelected(ids) {
+        const set = new Set((ids || []).map(Number));
+        Array.from(selProducts.options).forEach(
+          (o) => (o.selected = set.has(Number(o.value))),
+        );
+      }
+
+      function fillForm(pick) {
+        currentId = pick?.id ?? null;
+        el("w_title").value = pick?.title ?? "Выбор недели";
+        el("w_subtitle").value = pick?.subtitle ?? "";
+        el("w_start").value = pick?.weekStart ?? "";
+        el("w_end").value = pick?.weekEnd ?? "";
+        el("w_active").checked = !!pick?.isActive;
+        setSelected(pick?.productIds || []);
+      }
+
+      function renderList() {
+        const box = el("list");
+        box.innerHTML = "";
+
+        if (!picks.length) {
+          box.innerHTML = "<div class='muted'>Пока нет записей.</div>";
+          return;
+        }
+
+        picks.forEach((p) => {
+          const row = document.createElement("div");
+          row.className = "row";
+          row.style.display = "flex";
+          row.style.justifyContent = "space-between";
+          row.style.alignItems = "center";
+          row.style.padding = "10px 0";
+          row.style.borderBottom = "1px solid rgba(0,0,0,.06)";
+
+          const left = document.createElement("div");
+          left.innerHTML = `
+      <b>${p.isActive ? "✅ " : ""}${p.title}</b>
+      <div class="muted">${p.weekStart} → ${p.weekEnd} • товаров: ${(p.productIds || []).length}</div>
+    `;
+
+          const right = document.createElement("div");
+          right.style.display = "flex";
+          right.style.gap = "8px";
+
+          const btnEdit = document.createElement("button");
+          btnEdit.className = "btn btn-ghost";
+          btnEdit.textContent = "Редактировать";
+          btnEdit.onclick = () => fillForm(p);
+
+          const btnDel = document.createElement("button");
+          btnDel.className = "btn btn-danger";
+          btnDel.textContent = "Удалить";
+          btnDel.onclick = async () => {
+            if (!confirm("Удалить запись?")) return;
+            await fetch(`${API}/api/week-picks/${p.id}`, {
+              method: "DELETE",
+              headers: authHeaders(),
+            });
+            await loadAll();
+            fillForm(picks[0] || null);
+          };
+
+          right.append(btnEdit, btnDel);
+          row.append(left, right);
+          box.append(row);
+        });
+      }
+
+      async function loadAll() {
+        // товары
+        const pr = await fetch(`${API}/api/products`, {
+          headers: authHeaders(),
+        }).then((r) => r.json());
+        products = pr || [];
+        selProducts.innerHTML = "";
+        products.forEach((p) => selProducts.append(option(p)));
+
+        // выбор недели
+        picks = await fetch(`${API}/api/week-picks`, {
+          headers: authHeaders(),
+        }).then((r) => r.json());
+        picks = picks || [];
+        renderList();
+      }
+
+      el("new").onclick = () => fillForm(null);
+
+      el("save").onclick = async () => {
+        const payload = {
+          title: el("w_title").value.trim() || "Выбор недели",
+          subtitle: el("w_subtitle").value.trim() || "",
+          weekStart: el("w_start").value,
+          weekEnd: el("w_end").value,
+          productIds: selectedIds(),
+          isActive: el("w_active").checked,
+        };
+
+        const url = currentId
+          ? `${API}/api/week-picks/${currentId}`
+          : `${API}/api/week-picks`;
+        const method = currentId ? "PUT" : "POST";
+
+        const saved = await fetch(url, {
+          method,
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }).then((r) => r.json());
+
+        await loadAll();
+        // после сохранения — открыть сохранённое
+        const found = picks.find((x) => x.id === saved.id);
+        fillForm(found || picks[0] || null);
+      };
+
+      await loadAll();
+      fillForm(picks[0] || null);
+    </script>
+  </body>
 </html>

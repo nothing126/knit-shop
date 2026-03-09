@@ -1,10 +1,300 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • Товар</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"></div>
+          <b>Knit Admin</b>
+        </div>
+        <div class="nav">
+          <a href="/admin/products.html">Товары</a>
+          <a href="/admin/categories.html">Категории</a>
+          <a id="out" href="#">Выйти</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 id="title" style="margin: 0 0 12px">Добавить товар</h2>
+
+        <div class="grid">
+          <div class="field">
+            <label>Название (базовое)</label>
+            <input id="p_title" placeholder="Если переводы пустые, используется это" />
+          </div>
+
+          <div class="field">
+            <label>Цена (MDL)</label>
+            <input id="p_price" type="number" min="0" value="0" />
+          </div>
+
+          <div class="field">
+            <label>Категория</label>
+            <select id="p_cat"></select>
+          </div>
+
+          <div class="field">
+            <label>Количество</label>
+            <input id="p_qty" type="number" min="0" value="0" />
+          </div>
+
+          <div class="field">
+            <label>В наличии</label>
+            <select id="p_stock">
+              <option value="1">Да</option>
+              <option value="0">Нет</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label style="display: flex; gap: 10px; align-items: center">
+              <input id="p_weekpick" type="checkbox" />
+              Выбор недели
+            </label>
+          </div>
+
+          <div class="field">
+            <label>Фото</label>
+            <input id="p_img" type="file" accept="image/*" />
+            <div class="notice">Если не выберешь — останется старое.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 14px">
+          <div class="kicker" style="margin-bottom: 8px">Локализация названия</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center">
+            <select id="autoFrom" style="padding:10px;border-radius:12px;border:1px solid var(--line)">
+              <option value="ru">Источник: RU</option>
+              <option value="ro">Источник: RO</option>
+              <option value="en">Источник: EN</option>
+            </select>
+            <button id="autoTranslate" type="button" class="small">Сгенерировать переводы (бесплатно)</button>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label>RO название</label>
+              <input id="p_title_ro" placeholder="Nume produs" />
+            </div>
+            <div class="field">
+              <label>RU название</label>
+              <input id="p_title_ru" placeholder="Название товара" />
+            </div>
+            <div class="field">
+              <label>EN title</label>
+              <input id="p_title_en" placeholder="Product title" />
+            </div>
+          </div>
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap"><button id="copyTitle" type="button" class="small">Заполнить пустые названия из базового</button></div><div class="notice">Если поле пустое, на сайте берётся базовое название.</div>
+        </div>
+
+        <div class="card" style="margin-top: 14px">
+          <div class="kicker" style="margin-bottom: 8px">Локализация описания</div>
+
+          <div class="field" style="margin-top: 8px">
+            <label>Описание (базовое)</label>
+            <textarea id="p_desc" placeholder="Материал, размер, уход..."></textarea>
+          </div>
+
+          <div class="field" style="margin-top: 8px">
+            <label>RO описание</label>
+            <textarea id="p_desc_ro" placeholder="Descriere în română"></textarea>
+          </div>
+
+          <div class="field" style="margin-top: 8px">
+            <label>RU описание</label>
+            <textarea id="p_desc_ru" placeholder="Описание на русском"></textarea>
+          </div>
+
+          <div class="field" style="margin-top: 8px">
+            <label>EN description</label>
+            <textarea id="p_desc_en" placeholder="Description in English"></textarea>
+          </div>
+
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap"><button id="copyDesc" type="button" class="small">Заполнить пустые описания из базового</button></div><div class="notice">Если перевод пустой, на сайте используется базовое описание.</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 14px">
+          <button id="save" class="btn">Сохранить</button>
+          <a class="btn secondary" href="/admin/products.html">Отмена</a>
+        </div>
+        <div id="msg" class="notice"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { api, mustAuth, logout, qs } from "/admin/admin.js";
+      mustAuth();
+      qs("#out").onclick = (e) => {
+        e.preventDefault();
+        logout();
+      };
+
+      const url = new URL(location.href);
+      const id = url.searchParams.get("id");
+
+      async function loadCats(selectedId = null) {
+        const cats = await api("/api/categories");
+        const sel = qs("#p_cat");
+        sel.innerHTML =
+          `<option value="">Без категории</option>` +
+          cats.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+        if (selectedId) sel.value = String(selectedId);
+      }
+
+      function setValue(id, value) {
+        const el = qs(id);
+        if (!el) return;
+        el.value = value || "";
+      }
+
+      if (id) {
+        qs("#title").textContent = "Редактировать товар";
+        const p = await api(`/api/products/${id}`);
+        setValue("#p_title", p.title);
+        setValue("#p_price", p.price || 0);
+        setValue("#p_qty", p.quantity || 0);
+        setValue("#p_stock", String(p.inStock ? 1 : 0));
+        setValue("#p_desc", p.description);
+
+        setValue("#p_title_ro", p.title_ro);
+        setValue("#p_title_ru", p.title_ru);
+        setValue("#p_title_en", p.title_en);
+        setValue("#p_desc_ro", p.description_ro);
+        setValue("#p_desc_ru", p.description_ru);
+        setValue("#p_desc_en", p.description_en);
+
+        qs("#p_weekpick").checked = Number(p.isWeekPick) === 1;
+        await loadCats(p.categoryId);
+      } else {
+        await loadCats();
+        qs("#p_weekpick").checked = false;
+      }
+
+      function fillEmpty(baseSelector, selectors) {
+        const base = qs(baseSelector).value.trim();
+        if (!base) return;
+        selectors.forEach((sel) => {
+          if (!qs(sel).value.trim()) qs(sel).value = base;
+        });
+      }
+
+      qs("#copyTitle").onclick = () =>
+        fillEmpty("#p_title", ["#p_title_ro", "#p_title_ru", "#p_title_en"]);
+
+      qs("#copyDesc").onclick = () =>
+        fillEmpty("#p_desc", ["#p_desc_ro", "#p_desc_ru", "#p_desc_en"]);
+
+      const FIELD_TITLE = { ro: "#p_title_ro", ru: "#p_title_ru", en: "#p_title_en" };
+      const FIELD_DESC = { ro: "#p_desc_ro", ru: "#p_desc_ru", en: "#p_desc_en" };
+
+      async function translateText(text, from, to) {
+        const r = await api("/api/tools/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, from, to }),
+        });
+        return String(r.translatedText || "").trim();
+      }
+
+      function sourceValue(map, baseSel, from) {
+        const fromField = qs(map[from]);
+        const fromText = fromField ? fromField.value.trim() : "";
+        const baseText = qs(baseSel).value.trim();
+        return fromText || baseText;
+      }
+
+      qs("#autoTranslate").onclick = async () => {
+        const msg = qs("#msg");
+        const btn = qs("#autoTranslate");
+        const from = qs("#autoFrom").value;
+        btn.disabled = true;
+        msg.textContent = "Генерирую переводы...";
+        msg.classList.remove("error");
+
+        try {
+          const titleSrc = sourceValue(FIELD_TITLE, "#p_title", from);
+          const descSrc = sourceValue(FIELD_DESC, "#p_desc", from);
+
+          if (!titleSrc && !descSrc) {
+            msg.textContent = "Сначала заполни базовое название или описание.";
+            msg.classList.add("error");
+            return;
+          }
+
+          if (!qs("#p_title").value.trim() && titleSrc) qs("#p_title").value = titleSrc;
+          if (!qs("#p_desc").value.trim() && descSrc) qs("#p_desc").value = descSrc;
+
+          for (const to of ["ro", "ru", "en"]) {
+            if (to !== from && titleSrc && !qs(FIELD_TITLE[to]).value.trim()) {
+              qs(FIELD_TITLE[to]).value = await translateText(titleSrc, from, to);
+            }
+            if (to !== from && descSrc && !qs(FIELD_DESC[to]).value.trim()) {
+              qs(FIELD_DESC[to]).value = await translateText(descSrc, from, to);
+            }
+          }
+
+          msg.textContent = "Переводы заполнены.";
+        } catch (e) {
+          msg.textContent = `Перевод не удался: ${e.message}`;
+          msg.classList.add("error");
+        } finally {
+          btn.disabled = false;
+        }
+      };
+
+      qs("#save").onclick = async () => {
+        const msg = qs("#msg");
+        msg.textContent = "";
+        msg.classList.remove("error");
+        try {
+          const fd = new FormData();
+          fd.append("title", qs("#p_title").value.trim());
+          fd.append("price", qs("#p_price").value);
+          fd.append("description", qs("#p_desc").value.trim());
+          fd.append("title_ro", qs("#p_title_ro").value.trim());
+          fd.append("title_ru", qs("#p_title_ru").value.trim());
+          fd.append("title_en", qs("#p_title_en").value.trim());
+          fd.append("description_ro", qs("#p_desc_ro").value.trim());
+          fd.append("description_ru", qs("#p_desc_ru").value.trim());
+          fd.append("description_en", qs("#p_desc_en").value.trim());
+          fd.append("categoryId", qs("#p_cat").value);
+          fd.append("inStock", qs("#p_stock").value);
+          fd.append("quantity", qs("#p_qty").value);
+          fd.append("isWeekPick", qs("#p_weekpick").checked ? "1" : "0");
+
+          const f = qs("#p_img").files[0];
+          if (f) fd.append("image", f);
+
+          const weekPickValue = qs("#p_weekpick").checked ? "1" : "0";
+          let productId = id;
+
+          if (id) {
+            await api(`/api/products/${id}`, { method: "PUT", body: fd });
+          } else {
+            const created = await api(`/api/products`, { method: "POST", body: fd });
+            productId = String(created.id || "");
+          }
+
+          if (productId) {
+            await api(`/api/products/${productId}/week-pick`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ isWeekPick: weekPickValue }),
+            });
+          }
+
+          location.href = "/admin/products.html";
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.classList.add("error");
+        }
+      };
+    </script>
+  </body>
 </html>

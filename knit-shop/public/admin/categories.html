@@ -1,10 +1,201 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • Категории</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"></div>
+          <b>Knit Admin</b>
+        </div>
+        <div class="nav">
+          <a href="/admin/products.html">Товары</a>
+          <a class="active" href="/admin/categories.html">Категории</a>
+          <a id="out" href="#">Выйти</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+          "
+        >
+          <div class="field" style="min-width: 260px">
+            <label>Название</label>
+            <input id="name" placeholder="Например: Шапки" />
+          </div>
+          <div class="field" style="min-width: 240px">
+            <label>Slug (как на сайте)</label>
+            <input
+              id="slug"
+              placeholder="hats / sweaters / cardigans / accessories"
+            />
+          </div>
+          <div class="field" style="min-width: 200px">
+            <label>Показывать на сайте</label>
+            <select id="active">
+              <option value="1">Да</option>
+              <option value="0">Нет (скрыть)</option>
+            </select>
+          </div>
+          <button id="add" class="btn">Добавить</button>
+        </div>
+
+        <div style="margin-top: 14px">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Slug</th>
+                <th>На сайте</th>
+                <th style="text-align: right">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <div id="msg" class="notice"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { api, mustAuth, logout, qs } from "/admin/admin.js";
+
+      mustAuth();
+      qs("#out").onclick = (e) => {
+        e.preventDefault();
+        logout();
+      };
+
+      function showMsg(text, isError = false) {
+        const msg = qs("#msg");
+        msg.textContent = text || "";
+        msg.classList.toggle("error", Boolean(text) && isError);
+      }
+
+      async function load() {
+        showMsg("");
+        // ✅ было /api/admin/categories (404). Правильно:
+        const cats = await api("/api/categories");
+
+        qs("#rows").innerHTML = cats
+          .map(
+            (c) => `
+      <tr class="row" data-id="${c.id}">
+        <td>
+          <input data-name value="${escapeHtml(c.name ?? "")}"
+                 style="padding:10px;border-radius:12px;border:1px solid var(--line);width:100%"/>
+        </td>
+        <td>
+          <input data-slug value="${escapeHtml(c.slug ?? "")}"
+                 placeholder="hats"
+                 style="padding:10px;border-radius:12px;border:1px solid var(--line);width:100%"/>
+        </td>
+        <td>
+          <select data-active style="padding:10px;border-radius:12px;border:1px solid var(--line);">
+            <option value="1" ${Number(c.isActive) === 1 ? "selected" : ""}>Да</option>
+            <option value="0" ${Number(c.isActive) === 0 ? "selected" : ""}>Нет</option>
+          </select>
+        </td>
+        <td>
+          <div class="actions">
+            <button class="small" data-save="1">Сохранить</button>
+            <button class="small" data-del="1">Удалить</button>
+          </div>
+        </td>
+      </tr>
+    `,
+          )
+          .join("");
+
+        qs("#rows")
+          .querySelectorAll("tr")
+          .forEach((tr) => {
+            const id = tr.getAttribute("data-id");
+
+            tr.querySelector("[data-save]").onclick = async () => {
+              try {
+                const name = tr.querySelector("[data-name]").value.trim();
+                const slug = tr.querySelector("[data-slug]").value.trim();
+                const isActive = Number(
+                  tr.querySelector("[data-active]").value,
+                ); // ✅ число
+
+                if (!name)
+                  return showMsg("Название не может быть пустым", true);
+                if (!slug) return showMsg("Slug не может быть пустым", true);
+
+                await api(`/api/categories/${id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name, slug, isActive }),
+                });
+
+                showMsg("Сохранено ✅");
+                await load();
+              } catch (e) {
+                showMsg(e.message, true);
+              }
+            };
+
+            tr.querySelector("[data-del]").onclick = async () => {
+              if (!confirm("Удалить категорию?")) return;
+              try {
+                await api(`/api/categories/${id}`, { method: "DELETE" });
+                showMsg("Удалено ✅");
+                await load();
+              } catch (e) {
+                showMsg(e.message, true);
+              }
+            };
+          });
+      }
+
+      qs("#add").onclick = async () => {
+        try {
+          const name = qs("#name").value.trim();
+          const slug = qs("#slug").value.trim();
+          const isActive = Number(qs("#active").value); // ✅ число
+
+          if (!name) return showMsg("Название не может быть пустым", true);
+          if (!slug) return showMsg("Slug не может быть пустым", true);
+
+          await api("/api/categories", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, slug, isActive }),
+          });
+
+          qs("#name").value = "";
+          qs("#slug").value = "";
+          qs("#active").value = "1";
+
+          showMsg("Категория добавлена ✅");
+          await load();
+        } catch (e) {
+          showMsg(e.message, true);
+        }
+      };
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      await load();
+    </script>
+  </body>
 </html>

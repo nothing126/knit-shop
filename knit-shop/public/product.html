@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ro">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Warm Knit — Товар</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Warm Knit — Product</title>
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
 <header class="header">
@@ -18,18 +18,29 @@
         </svg>
         <div class="title">
           <strong>Warm Knit</strong>
-          <span>страница товара</span>
+          <span data-i18n="product_page">product page</span>
         </div>
       </a>
 
       <nav class="links">
-        <a href="shop.html">Каталог</a>
-        <a href="about.html">О бренде</a>
-        <a href="contact.html">Контакты</a>
+        <a href="shop.html" class="active" data-i18n="nav_catalog">Catalog</a>
+        <a href="about.html" data-i18n="nav_about">Despre brand</a>
+        <a href="contact.html" data-i18n="nav_contact">Contacte</a>
       </nav>
 
       <div class="actions">
-        <a class="btn small" href="shop.html">← Назад</a>
+        <select id="langSelect" class="select">
+          <option value="ro">RO</option>
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+        </select>
+
+        <button class="icon-btn burger" id="burgerBtn" aria-label="menu">
+          <svg class="icon" viewBox="0 0 24 24" fill="none">
+            <path d="M5 7h14M5 12h14M5 17h14" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
         <button class="icon-btn badge" id="cartBtn" aria-label="cart">
           <svg class="icon" viewBox="0 0 24 24" fill="none">
             <path d="M7 7h14l-2 10H8L6 3H3" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -37,6 +48,14 @@
           </svg>
           <span id="cartBadge">0</span>
         </button>
+      </div>
+    </div>
+
+    <div id="mobileLinks" class="card mobile-links">
+      <div class="mobile-links-row">
+        <a class="btn small" href="shop.html" data-i18n="nav_catalog">Catalog</a>
+        <a class="btn small" href="about.html" data-i18n="nav_about">Despre brand</a>
+        <a class="btn small" href="contact.html" data-i18n="nav_contact">Contacte</a>
       </div>
     </div>
   </div>
@@ -54,7 +73,7 @@
 
       <div class="card pad reveal">
         <div class="kicker" id="pTag">Handmade</div>
-        <h1 class="h2" id="pName">Название</h1>
+        <h1 class="h2" id="pName">—</h1>
 
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
           <div style="font-family:var(--serif);font-size:26px" id="pPrice">0 MDL</div>
@@ -65,7 +84,7 @@
 
         <div class="form-row" style="margin-top:14px">
           <div class="field">
-            <label>Размер</label>
+            <label data-i18n="size">Size</label>
             <select class="select" id="pSize">
               <option>One size</option>
               <option>XS/S</option>
@@ -73,29 +92,29 @@
             </select>
           </div>
           <div class="field">
-            <label>Цвет</label>
+            <label data-i18n="color">Color</label>
             <select class="select" id="pColor">
-              <option>Пудровый</option>
-              <option>Молочный</option>
-              <option>Карамель</option>
-              <option>Лаванда</option>
+              <option>Pudra</option>
+              <option>Milk</option>
+              <option>Caramel</option>
+              <option>Lavender</option>
             </select>
           </div>
         </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
-          <button class="btn primary" id="pAdd" type="button">В корзину</button>
-          <button class="btn" id="pBuyNow" type="button">Купить сейчас</button>
+          <button class="btn primary" id="pAdd" type="button" data-i18n="add_to_cart">Add to cart</button>
+          <button class="btn" id="pBuyNow" type="button" data-i18n="buy_now">Buy now</button>
         </div>
 
         <hr class="sep"/>
         <div class="split">
           <div>
-            <div class="kicker">Категория</div>
+            <div class="kicker" data-i18n="category">Category</div>
             <div style="margin-top:6px;font-size:14px;color:rgba(45,36,33,.78)" id="pCat"></div>
           </div>
           <div>
-            <div class="kicker">Уход</div>
+            <div class="kicker" data-i18n="care_short">Care</div>
             <div style="margin-top:6px;font-size:14px;color:rgba(45,36,33,.78)" id="pCare"></div>
           </div>
         </div>
@@ -107,10 +126,10 @@
     <div class="card pad reveal">
       <div class="toolbar">
         <div>
-          <div class="kicker">Рекомендации</div>
-          <h2 class="h2" style="margin-top:8px">Сочетается идеально</h2>
+          <div class="kicker" data-i18n="recs">Recommendations</div>
+          <h2 class="h2" style="margin-top:8px" data-i18n="pairs">Pairs perfectly</h2>
         </div>
-        <a class="btn small" href="shop.html">Каталог →</a>
+        <a class="btn small" href="shop.html" data-i18n="nav_catalog">Catalog →</a>
       </div>
       <div class="products" id="recommendGrid" style="margin-top:16px"></div>
     </div>
@@ -120,17 +139,16 @@
 <footer class="footer">
   <div class="container">
     <div class="row">
-      <div class="small">Warm Knit • product page • demo</div>
-      <div class="small"><a href="contact.html">Задать вопрос</a></div>
+      <div class="small">Warm Knit • <span data-i18n="product_page">product page</span> • demo</div>
+      <div class="small"><a href="contact.html" data-i18n="ask_question">Ask a question</a></div>
     </div>
   </div>
 </footer>
 
-<!-- Cart Drawer -->
 <div class="drawer-backdrop" id="drawerBackdrop"></div>
 <aside class="drawer">
   <div class="head">
-    <h4>Корзина</h4>
+    <h4 data-i18n="cart">Coș</h4>
     <button class="icon-btn" id="cartClose" aria-label="close cart">
       <svg class="icon" viewBox="0 0 24 24" fill="none">
         <path d="M6 6l12 12M18 6L6 18" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
@@ -139,21 +157,22 @@
   </div>
   <div class="content">
     <div id="cartEmpty" class="card pad" style="display:none">
-      <div class="kicker">Пусто</div>
-      <p class="p" style="margin:10px 0 0">Добавь что-нибудь милое ✨</p>
+      <div class="kicker" data-i18n="empty_kicker">Gol</div>
+      <p class="p" style="margin:10px 0 0" data-i18n="empty_text"></p>
     </div>
     <div id="cartList"></div>
   </div>
   <div class="foot">
     <div class="total">
-      <span>Итого</span>
+      <span data-i18n="total">Total</span>
       <b id="cartTotal">0 MDL</b>
     </div>
-    <button class="btn primary" id="checkoutBtn" type="button" style="width:100%">Оформить (заглушка)</button>
+    <button class="btn primary" id="checkoutBtn" type="button" style="width:100%" data-i18n="checkout">Finalizează (demo)</button>
   </div>
 </aside>
 
-<div class="toast" id="toast">Добавлено</div>
-<script src="app.js"></script>
+<div class="toast" id="toast">—</div>
+
+<script src="/js/app.js"></script>
 </body>
 </html>

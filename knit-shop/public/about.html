@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ro">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Warm Knit — О бренде</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>Warm Knit — About</title>
+    <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
 <header class="header">
@@ -18,18 +18,34 @@
                 </svg>
                 <div class="title">
                     <strong>Warm Knit</strong>
-                    <span>история • slow fashion</span>
+                    <span data-i18n="brand_subtitle">handmade knitwear • small batches</span>
                 </div>
             </a>
 
             <nav class="links">
-                <a href="shop.html">Каталог</a>
-                <a href="about.html">О бренде</a>
-                <a href="contact.html">Контакты</a>
+                <a href="shop.html" data-i18n="nav_catalog">Catalog</a>
+                <a href="about.html" class="active" data-i18n="nav_about">Despre brand</a>
+                <a href="contact.html" data-i18n="nav_contact">Contacte</a>
             </nav>
 
             <div class="actions">
-                <a class="btn small" href="shop.html">Каталог</a>
+                <select id="langSelect" class="select">
+                    <option value="ro">RO</option>
+                    <option value="ru">RU</option>
+                    <option value="en">EN</option>
+                </select>
+
+                <a class="pill" href="shop.html" title="Catalog">
+                    <span class="dot"></span>
+                    <span style="font-size:13px;color:rgba(45,36,33,.78)" data-i18n="nav_catalog">Catalog</span>
+                </a>
+
+                <button class="icon-btn burger" id="burgerBtn" aria-label="menu">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 7h14M5 12h14M5 17h14" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+
                 <button class="icon-btn badge" id="cartBtn" aria-label="cart">
                     <svg class="icon" viewBox="0 0 24 24" fill="none">
                         <path d="M7 7h14l-2 10H8L6 3H3" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -39,22 +55,28 @@
                 </button>
             </div>
         </div>
+
+        <div id="mobileLinks" class="card mobile-links">
+            <div class="mobile-links-row">
+                <a class="btn small" href="shop.html" data-i18n="nav_catalog">Catalog</a>
+                <a class="btn small" href="about.html" data-i18n="nav_about">Despre brand</a>
+                <a class="btn small" href="contact.html" data-i18n="nav_contact">Contacte</a>
+            </div>
+        </div>
     </div>
 </header>
 
 <main class="container">
     <section class="section">
         <div class="card pad-lg reveal">
-            <div class="kicker">О бренде</div>
-            <h1 class="h1">Тепло — это дизайн</h1>
-            <p class="p">Это демо-сайт под твой pet-проект. Здесь ты сможешь спокойно добавить реальные фото, подключить оплату и сделать админку.</p>
+            <div class="kicker" data-i18n="about_kicker">Despre brand</div>
+            <h1 class="h1" data-i18n="about_h1">Căldura este design</h1>
+            <p class="p" data-i18n="about_p"></p>
 
             <div class="split" style="margin-top:18px">
                 <div class="card pad" style="background:rgba(255,255,255,.60)">
-                    <div class="kicker">Ценности</div>
-                    <p class="p" style="margin-top:10px">
-                        Натуральная пряжа, маленькие партии, бережное отношение к материалам и честное качество.
-                    </p>
+                    <div class="kicker" data-i18n="values">Valori</div>
+                    <p class="p" style="margin-top:10px" data-i18n="values_p"></p>
                     <div class="chip-row">
                         <div class="chip">slow fashion</div>
                         <div class="chip">handmade</div>
@@ -63,11 +85,9 @@
                 </div>
 
                 <div class="card pad" style="background:rgba(255,255,255,.60)">
-                    <div class="kicker">Подход</div>
-                    <p class="p" style="margin-top:10px">
-                        Минималистичный “дорогой” UI: воздух, мягкие градиенты, плавные анимации, и акцент на текстуру.
-                    </p>
-                    <a class="btn small primary" href="shop.html">Смотреть каталог →</a>
+                    <div class="kicker" data-i18n="approach">Abordare</div>
+                    <p class="p" style="margin-top:10px" data-i18n="approach_p"></p>
+                    <a class="btn small primary" href="shop.html" data-i18n="view_catalog">Vezi catalogul →</a>
                 </div>
             </div>
 
@@ -76,10 +96,10 @@
             <div class="split">
                 <div class="hero-photo" style="min-height:280px" aria-hidden="true"></div>
                 <div>
-                    <h2 class="h2">История (плейсхолдер)</h2>
-                    <p class="p">Например: “Я начала вязать для друзей, потом появились первые заказы…” — 6–8 строк личной истории всегда поднимают доверие.</p>
-                    <p class="p">Сюда же можно добавить фото мастерской, процесс вязания, упаковку и материалы.</p>
-                    <a class="btn" href="contact.html">Написать нам</a>
+                    <h2 class="h2" data-i18n="story_title">Story (placeholder)</h2>
+                    <p class="p" data-i18n="story_p1"></p>
+                    <p class="p" data-i18n="story_p2"></p>
+                    <a class="btn" href="contact.html" data-i18n="write_us">Scrie-ne</a>
                 </div>
             </div>
         </div>
@@ -89,17 +109,16 @@
 <footer class="footer">
     <div class="container">
         <div class="row">
-            <div class="small">Warm Knit • about • demo</div>
-            <div class="small"><a href="contact.html">Контакты</a></div>
+            <div class="small">Warm Knit • <span data-i18n="nav_about">About</span> • demo</div>
+            <div class="small"><a href="contact.html" data-i18n="nav_contact">Contact</a></div>
         </div>
     </div>
 </footer>
 
-<!-- Cart Drawer -->
 <div class="drawer-backdrop" id="drawerBackdrop"></div>
 <aside class="drawer">
     <div class="head">
-        <h4>Корзина</h4>
+        <h4 data-i18n="cart">Coș</h4>
         <button class="icon-btn" id="cartClose" aria-label="close cart">
             <svg class="icon" viewBox="0 0 24 24" fill="none">
                 <path d="M6 6l12 12M18 6L6 18" stroke="rgba(45,36,33,.8)" stroke-width="2" stroke-linecap="round"/>
@@ -108,21 +127,21 @@
     </div>
     <div class="content">
         <div id="cartEmpty" class="card pad" style="display:none">
-            <div class="kicker">Пусто</div>
-            <p class="p" style="margin:10px 0 0">Добавь что-нибудь милое ✨</p>
+            <div class="kicker" data-i18n="empty_kicker">Gol</div>
+            <p class="p" style="margin:10px 0 0" data-i18n="empty_text"></p>
         </div>
         <div id="cartList"></div>
     </div>
     <div class="foot">
         <div class="total">
-            <span>Итого</span>
+            <span data-i18n="total">Total</span>
             <b id="cartTotal">0 MDL</b>
         </div>
-        <button class="btn primary" id="checkoutBtn" type="button" style="width:100%">Оформить (заглушка)</button>
+        <button class="btn primary" id="checkoutBtn" type="button" style="width:100%" data-i18n="checkout">Finalizează (demo)</button>
     </div>
 </aside>
 
-<div class="toast" id="toast">Добавлено</div>
-<script src="app.js"></script>
+<div class="toast" id="toast">—</div>
+<script src="/js/app.js"></script>
 </body>
 </html>
