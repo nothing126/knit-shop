@@ -41,8 +41,20 @@ function setLang(lang) {
     location.href = newPath + location.search + location.hash;
     return;
   }
+
+  const p = String(location.pathname || "/").toLowerCase();
+  const map = {
+    "/": `/${v}/`,
+    "/index.html": `/${v}/`,
+    "/shop.html": `/${v}/shop`,
+    "/about.html": `/${v}/about`,
+    "/contact.html": `/${v}/contact`,
+    "/product.html": `/${v}/product`,
+    "/week-picks.html": `/${v}/week-picks`,
+  };
+  const next = map[p] || `/${v}/`;
   setCookie(LANG_COOKIE, v);
-  location.href = `/${v}/shop`;
+  location.href = next + location.search + location.hash;
 }
 
 function pageT(key, fallback = "") {
@@ -261,15 +273,16 @@ function hookShopUI() {
 }
 
 async function initShop() {
+  const hasCategoryFilter = Boolean(document.getElementById("category"));
   const [cats, prods] = await Promise.all([
-    apiGet("/api/public/categories"),
+    hasCategoryFilter ? apiGet("/api/public/categories") : Promise.resolve([]),
     apiGet("/api/public/products"),
   ]);
 
   SHOP.categories = Array.isArray(cats) ? cats : [];
   SHOP.products = Array.isArray(prods) ? prods : [];
 
-  renderCategoriesSelect();
+  if (hasCategoryFilter) renderCategoriesSelect();
   hookShopUI();
   renderShop();
 }
@@ -484,9 +497,35 @@ function initMobileMenu() {
   const box = document.getElementById("mobileLinks");
   const btn = document.getElementById("burgerBtn");
   if (!box || !btn) return;
-  btn.addEventListener("click", () => {
-    const isOpen = box.style.display !== "none";
-    box.style.display = isOpen ? "none" : "block";
+
+  if (!box.id) box.id = "mobileLinks";
+  btn.setAttribute("aria-controls", box.id);
+  btn.setAttribute("aria-expanded", "false");
+
+  const setOpen = (open) => {
+    box.classList.toggle("is-open", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  const isOpen = () => box.classList.contains("is-open");
+
+  setOpen(false);
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setOpen(!isOpen());
+  });
+  document.addEventListener("click", (e) => {
+    if (!isOpen()) return;
+    if (box.contains(e.target) || btn.contains(e.target)) return;
+    setOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setOpen(false);
+  });
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 860) setOpen(false);
+  });
+  box.querySelectorAll("a").forEach((a) => {
+    a.addEventListener("click", () => setOpen(false));
   });
 }
 

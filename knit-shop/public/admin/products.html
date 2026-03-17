@@ -16,6 +16,7 @@
         <div class="nav">
           <a class="active" href="/admin/products.html">Товары</a>
           <a href="/admin/categories.html">Категории</a>
+          <a href="/admin/week-picks.html">Выбор недели</a>
           <a id="out" href="#">Выйти</a>
         </div>
       </div>
@@ -92,8 +93,8 @@
     </div>
 
     <script type="module">
-      import { api, mustAuth, logout, qs } from "/admin/admin.js";
-      mustAuth();
+      import { api, mustAuth, logout, qs, escapeHtml } from "/admin/admin.js";
+      await mustAuth();
       qs("#out").onclick = (e) => {
         e.preventDefault();
         logout();
@@ -102,10 +103,11 @@
       async function loadCats() {
         const cats = await api("/api/categories"); // старый маршрут
         const sel = qs("#cat");
+        const esc = escapeHtml;
         sel.innerHTML =
           `<option value="">Все категории</option>` +
           cats
-            .map((c) => `<option value="${c.id}">${c.name}</option>`)
+            .map((c) => `<option value="${Number(c.id) || 0}">${esc(c.name)}</option>`)
             .join("");
       }
 
@@ -124,6 +126,15 @@
         if (inStock !== "") params.set("inStock", inStock);
 
         const items = await api("/api/products?" + params.toString());
+        const esc = escapeHtml;
+        const safeImageUrl = (url) => {
+          const v = String(url || "").trim();
+          if (!v) return "";
+          if (v.startsWith("/uploads/")) return v;
+          if (v.startsWith("http://") || v.startsWith("https://")) return v;
+          if (v.startsWith("data:image/")) return v;
+          return "";
+        };
 
         const tbody = qs("#rows");
         tbody.innerHTML = items
@@ -132,15 +143,15 @@
       <tr data-id="${p.id}">
         <td style="display:flex; align-items:center; gap:10px;">
           <img class="thumb"
-               src="${p.imageUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Crect width='100%25' height='100%25' fill='%23ffe6ee'/%3E%3C/svg%3E"}"/>
+               src="${esc(safeImageUrl(p.imageUrl) || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Crect width='100%25' height='100%25' fill='%23ffe6ee'/%3E%3C/svg%3E")}"/>
           <div>
-            <div style="font-weight:800">${p.title}</div>
-            <div class="notice">ID: ${p.id} • Кол-во: ${p.quantity}</div>
+            <div style="font-weight:800">${esc(p.title)}</div>
+            <div class="notice">ID: ${Number(p.id) || 0} • Кол-во: ${Number(p.quantity) || 0}</div>
           </div>
         </td>
 
-        <td>${p.categoryName || "—"}</td>
-        <td><b>${p.price}</b> MDL</td>
+        <td>${esc(p.categoryName || "—")}</td>
+        <td><b>${Number(p.price) || 0}</b> MDL</td>
         <td>${p.inStock ? "В наличии" : "Нет"}</td>
         <td>${p.isActive ? "Показывается" : "Скрыт"}</td>
 
@@ -152,7 +163,7 @@
 
         <td style="text-align:right;">
           <div class="actions">
-            <a class="small" href="/admin/product-edit.html?id=${p.id}">
+            <a class="small" href="/admin/product-edit.html?id=${encodeURIComponent(p.id)}">
               Редактировать
             </a>
 

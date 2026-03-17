@@ -16,6 +16,7 @@
         <div class="nav">
           <a href="/admin/products.html">Товары</a>
           <a href="/admin/categories.html">Категории</a>
+          <a href="/admin/week-picks.html">Выбор недели</a>
           <a id="out" href="#">Выйти</a>
         </div>
       </div>
@@ -128,8 +129,8 @@
     </div>
 
     <script type="module">
-      import { api, mustAuth, logout, qs } from "/admin/admin.js";
-      mustAuth();
+      import { api, mustAuth, logout, qs, escapeHtml } from "/admin/admin.js";
+      await mustAuth();
       qs("#out").onclick = (e) => {
         e.preventDefault();
         logout();
@@ -143,7 +144,7 @@
         const sel = qs("#p_cat");
         sel.innerHTML =
           `<option value="">Без категории</option>` +
-          cats.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+          cats.map((c) => `<option value="${Number(c.id) || 0}">${escapeHtml(c.name)}</option>`).join("");
         if (selectedId) sel.value = String(selectedId);
       }
 

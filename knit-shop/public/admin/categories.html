@@ -16,6 +16,7 @@
         <div class="nav">
           <a href="/admin/products.html">Товары</a>
           <a class="active" href="/admin/categories.html">Категории</a>
+          <a href="/admin/week-picks.html">Выбор недели</a>
           <a id="out" href="#">Выйти</a>
         </div>
       </div>
@@ -68,9 +69,9 @@
     </div>
 
     <script type="module">
-      import { api, mustAuth, logout, qs } from "/admin/admin.js";
+      import { api, mustAuth, logout, qs, escapeHtml } from "/admin/admin.js";
 
-      mustAuth();
+      await mustAuth();
       qs("#out").onclick = (e) => {
         e.preventDefault();
         logout();
@@ -185,15 +186,6 @@
           showMsg(e.message, true);
         }
       };
-
-      function escapeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;");
-      }
 
       await load();
     </script>

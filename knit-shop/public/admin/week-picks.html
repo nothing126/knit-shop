@@ -26,16 +26,46 @@
 
         <div class="grid">
           <div class="field">
-            <label>Заголовок</label>
+            <label>Заголовок (базовый)</label>
             <input id="w_title" placeholder="Выбор недели" />
           </div>
 
           <div class="field">
-            <label>Подзаголовок</label>
+            <label>Подзаголовок (базовый)</label>
             <input
               id="w_subtitle"
               placeholder="Например: Самые уютные вещи этой недели"
             />
+          </div>
+
+          <div class="field">
+            <label>Заголовок RO</label>
+            <input id="w_title_ro" placeholder="Alegerea săptămânii" />
+          </div>
+
+          <div class="field">
+            <label>Заголовок RU</label>
+            <input id="w_title_ru" placeholder="Выбор недели" />
+          </div>
+
+          <div class="field">
+            <label>Заголовок EN</label>
+            <input id="w_title_en" placeholder="Week picks" />
+          </div>
+
+          <div class="field">
+            <label>Подзаголовок RO</label>
+            <input id="w_subtitle_ro" placeholder="Opțional" />
+          </div>
+
+          <div class="field">
+            <label>Подзаголовок RU</label>
+            <input id="w_subtitle_ru" placeholder="Опционально" />
+          </div>
+
+          <div class="field">
+            <label>Подзаголовок EN</label>
+            <input id="w_subtitle_en" placeholder="Optional" />
           </div>
 
           <div class="field">
@@ -82,22 +112,25 @@
     </div>
 
     <script type="module">
-      import {
-        API,
-        authHeaders,
-        requireAuth,
-        logout,
-      } from "/admin/admin.api.js";
+      import { api, mustAuth, logout, qs, escapeHtml } from "/admin/admin.js";
 
-      requireAuth();
-      document.getElementById("out").onclick = logout;
+      await mustAuth();
+      document.getElementById("out").onclick = (e) => {
+        e.preventDefault();
+        logout();
+      };
 
       let currentId = null;
       let products = [];
       let picks = [];
 
-      const el = (id) => document.getElementById(id);
+      const el = (id) => qs(`#${id}`);
       const selProducts = el("w_products");
+      const DEFAULT_TITLE = {
+        ro: "Alegerea săptămânii",
+        ru: "Выбор недели",
+        en: "Week picks",
+      };
 
       function option(p) {
         const o = document.createElement("option");
@@ -121,8 +154,14 @@
 
       function fillForm(pick) {
         currentId = pick?.id ?? null;
-        el("w_title").value = pick?.title ?? "Выбор недели";
+        el("w_title").value = pick?.title ?? DEFAULT_TITLE.ru;
         el("w_subtitle").value = pick?.subtitle ?? "";
+        el("w_title_ro").value = pick?.title_ro ?? "";
+        el("w_title_ru").value = pick?.title_ru ?? "";
+        el("w_title_en").value = pick?.title_en ?? "";
+        el("w_subtitle_ro").value = pick?.subtitle_ro ?? "";
+        el("w_subtitle_ru").value = pick?.subtitle_ru ?? "";
+        el("w_subtitle_en").value = pick?.subtitle_en ?? "";
         el("w_start").value = pick?.weekStart ?? "";
         el("w_end").value = pick?.weekEnd ?? "";
         el("w_active").checked = !!pick?.isActive;
@@ -148,9 +187,13 @@
           row.style.borderBottom = "1px solid rgba(0,0,0,.06)";
 
           const left = document.createElement("div");
+          const title = escapeHtml(p.title || "");
+          const weekStart = escapeHtml(p.weekStart || "");
+          const weekEnd = escapeHtml(p.weekEnd || "");
+          const count = Number((p.productIds || []).length) || 0;
           left.innerHTML = `
-      <b>${p.isActive ? "✅ " : ""}${p.title}</b>
-      <div class="muted">${p.weekStart} → ${p.weekEnd} • товаров: ${(p.productIds || []).length}</div>
+      <b>${p.isActive ? "✅ " : ""}${title}</b>
+      <div class="muted">${weekStart} → ${weekEnd} • товаров: ${count}</div>
     `;
 
           const right = document.createElement("div");
@@ -167,9 +210,8 @@
           btnDel.textContent = "Удалить";
           btnDel.onclick = async () => {
             if (!confirm("Удалить запись?")) return;
-            await fetch(`${API}/api/week-picks/${p.id}`, {
+            await api(`/api/week-picks/${p.id}`, {
               method: "DELETE",
-              headers: authHeaders(),
             });
             await loadAll();
             fillForm(picks[0] || null);
@@ -182,18 +224,12 @@
       }
 
       async function loadAll() {
-        // товары
-        const pr = await fetch(`${API}/api/products`, {
-          headers: authHeaders(),
-        }).then((r) => r.json());
+        const pr = await api("/api/products");
         products = pr || [];
         selProducts.innerHTML = "";
         products.forEach((p) => selProducts.append(option(p)));
 
-        // выбор недели
-        picks = await fetch(`${API}/api/week-picks`, {
-          headers: authHeaders(),
-        }).then((r) => r.json());
+        picks = await api("/api/week-picks");
         picks = picks || [];
         renderList();
       }
@@ -202,27 +238,30 @@
 
       el("save").onclick = async () => {
         const payload = {
-          title: el("w_title").value.trim() || "Выбор недели",
+          title: el("w_title").value.trim() || DEFAULT_TITLE.ru,
           subtitle: el("w_subtitle").value.trim() || "",
+          title_ro: el("w_title_ro").value.trim(),
+          title_ru: el("w_title_ru").value.trim(),
+          title_en: el("w_title_en").value.trim(),
+          subtitle_ro: el("w_subtitle_ro").value.trim(),
+          subtitle_ru: el("w_subtitle_ru").value.trim(),
+          subtitle_en: el("w_subtitle_en").value.trim(),
           weekStart: el("w_start").value,
           weekEnd: el("w_end").value,
           productIds: selectedIds(),
           isActive: el("w_active").checked,
         };
 
-        const url = currentId
-          ? `${API}/api/week-picks/${currentId}`
-          : `${API}/api/week-picks`;
+        const url = currentId ? `/api/week-picks/${currentId}` : `/api/week-picks`;
         const method = currentId ? "PUT" : "POST";
 
-        const saved = await fetch(url, {
+        const saved = await api(url, {
           method,
-          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }).then((r) => r.json());
+        });
 
         await loadAll();
-        // после сохранения — открыть сохранённое
         const found = picks.find((x) => x.id === saved.id);
         fillForm(found || picks[0] || null);
       };

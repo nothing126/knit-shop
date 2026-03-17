@@ -78,37 +78,6 @@
   </section>
 
   <section class="section">
-    <div class="card pad reveal">
-      <div class="toolbar">
-        <div class="search" role="search">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="rgba(45,36,33,.55)" stroke-width="2"/>
-            <path d="M16.5 16.5 21 21" stroke="rgba(45,36,33,.55)" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <input id="q" data-i18n-placeholder="search_placeholder" placeholder="Search…"/>
-        </div>
-
-        <div class="filters">
-          <select id="category" class="select" aria-label="Category"></select>
-
-          <label class="pill" style="gap:8px; cursor:pointer">
-            <input id="inStock" type="checkbox" style="accent-color: var(--rose)"/>
-            <span style="font-size:13px;color:rgba(45,36,33,.78)" data-i18n="in_stock_only">In stock only</span>
-          </label>
-
-          <select id="sort" class="select" aria-label="Sort">
-            <option value="new" data-i18n="sort_new">New</option>
-            <option value="price_asc" data-i18n="sort_price_asc">Price ↑</option>
-            <option value="price_desc" data-i18n="sort_price_desc">Price ↓</option>
-          </select>
-
-          <button id="resetFilters" class="btn small" type="button" data-i18n="reset">Reset</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
     <div id="empty" class="card pad" style="display:none" data-i18n="empty_text">Add something cute ✨</div>
     <div id="grid" class="products"></div>
   </section>

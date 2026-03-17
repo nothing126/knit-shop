@@ -11,17 +11,44 @@ import { db, initDb } from "./db.js";
 dotenv.config();
 initDb();
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required");
+}
+if (!process.env.ADMIN_USER || !process.env.ADMIN_PASS) {
+  throw new Error("ADMIN_USER and ADMIN_PASS are required");
+}
+
 const app = express();
 
 // ✅ CORS + cookies
+function buildAllowedOrigins() {
+  const raw = String(process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+  return new Set(raw);
+}
+const ALLOWED_ORIGINS = buildAllowedOrigins();
 app.use(
   cors({
-    origin: true,
+    origin(origin, cb) {
+      if (!origin) return cb(null, true);
+      if (ALLOWED_ORIGINS.size === 0) return cb(null, false);
+      return cb(null, ALLOWED_ORIGINS.has(origin));
+    },
     credentials: true,
   }),
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
+
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,19 +79,27 @@ function setCookie(
   res,
   name,
   value,
-  { maxAgeDays = 365, cookiePath = "/", sameSite = "Lax" } = {},
+  {
+    maxAgeDays = 365,
+    cookiePath = "/",
+    sameSite = "Lax",
+    httpOnly = false,
+  } = {},
 ) {
   const maxAge = maxAgeDays * 24 * 60 * 60;
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  const hOnly = httpOnly ? "; HttpOnly" : "";
   res.setHeader(
     "Set-Cookie",
-    `${name}=${encodeURIComponent(String(value ?? ""))}; Max-Age=${maxAge}; Path=${cookiePath}; SameSite=${sameSite}${secure}`,
+    `${name}=${encodeURIComponent(String(value ?? ""))}; Max-Age=${maxAge}; Path=${cookiePath}; SameSite=${sameSite}${hOnly}${secure}`,
   );
 }
-function clearCookie(res, name, { cookiePath = "/" } = {}) {
+function clearCookie(res, name, { cookiePath = "/", httpOnly = false } = {}) {
+  const hOnly = httpOnly ? "; HttpOnly" : "";
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   res.setHeader(
     "Set-Cookie",
-    `${name}=; Max-Age=0; Path=${cookiePath}; SameSite=Lax`,
+    `${name}=; Max-Age=0; Path=${cookiePath}; SameSite=Lax${hOnly}${secure}`,
   );
 }
 
@@ -86,7 +121,7 @@ const I18N = {
 
     shop_kicker: "Colecție",
     shop_title: "Catalog",
-    shop_desc: "Filtre, căutare și sortare — găsești rapid ce ai nevoie.",
+    shop_desc: "Alege lucrurile tricotate care îți plac.",
     search_placeholder: "Caută: pulover, căciulă, premium…",
     all_categories: "Toate categoriile",
     in_stock_only: "Doar în stoc",
@@ -178,7 +213,7 @@ const I18N = {
 
     shop_kicker: "Коллекция",
     shop_title: "Каталог",
-    shop_desc: "Фильтры, поиск и сортировка — находите нужное быстро.",
+    shop_desc: "Выбирайте вязаные вещи, которые вам нравятся.",
     search_placeholder: "Поиск: свитер, шапка, premium…",
     all_categories: "Все категории",
     in_stock_only: "Только в наличии",
@@ -270,7 +305,7 @@ const I18N = {
 
     shop_kicker: "Collection",
     shop_title: "Catalog",
-    shop_desc: "Filters, search, and sorting help you find items quickly.",
+    shop_desc: "Choose knitwear pieces you love.",
     search_placeholder: "Search: sweater, hat, premium…",
     all_categories: "All categories",
     in_stock_only: "In stock only",
@@ -369,6 +404,82 @@ function t(lang, key) {
     key
   );
 }
+const WEEK_TITLE_DEFAULTS = new Set(
+  ["ro", "ru", "en"].map((l) =>
+    String(I18N[l]?.week_title || "").trim().toLowerCase(),
+  ),
+);
+
+function isDefaultWeekTitle(title) {
+  const v = String(title || "").trim().toLowerCase();
+  return v ? WEEK_TITLE_DEFAULTS.has(v) : false;
+}
+
+function defaultWeekTitle(lang) {
+  return t(normalizeLang(lang), "week_title");
+}
+
+function normalizeWeekPickPayload(body, fallbackLang = DEFAULT_LANG) {
+  const src = body || {};
+
+  const titleRaw = trimMax(src.title, 120);
+  const titleRoRaw = trimMax(src.title_ro, 120);
+  const titleRuRaw = trimMax(src.title_ru, 120);
+  const titleEnRaw = trimMax(src.title_en, 120);
+
+  const subtitleRaw = trimMax(src.subtitle, 260);
+  const subtitleRoRaw = trimMax(src.subtitle_ro, 260);
+  const subtitleRuRaw = trimMax(src.subtitle_ru, 260);
+  const subtitleEnRaw = trimMax(src.subtitle_en, 260);
+
+  const fallbackTitle =
+    titleRaw ||
+    titleRoRaw ||
+    titleRuRaw ||
+    titleEnRaw ||
+    defaultWeekTitle(fallbackLang);
+  const useDefaultTitles = isDefaultWeekTitle(fallbackTitle);
+
+  const titleRo = useDefaultTitles
+    ? defaultWeekTitle("ro")
+    : titleRoRaw || fallbackTitle;
+  const titleRu = useDefaultTitles
+    ? defaultWeekTitle("ru")
+    : titleRuRaw || fallbackTitle;
+  const titleEn = useDefaultTitles
+    ? defaultWeekTitle("en")
+    : titleEnRaw || fallbackTitle;
+
+  return {
+    title: fallbackTitle,
+    title_ro: titleRo,
+    title_ru: titleRu,
+    title_en: titleEn,
+    subtitle: subtitleRaw,
+    subtitle_ro: subtitleRoRaw || subtitleRaw,
+    subtitle_ru: subtitleRuRaw || subtitleRaw,
+    subtitle_en: subtitleEnRaw || subtitleRaw,
+    weekStart: trimMax(src.weekStart, 20),
+    weekEnd: trimMax(src.weekEnd, 20),
+  };
+}
+
+function localizeWeekPickRow(row, lang) {
+  if (!row) return row;
+  const xlang = normalizeLang(lang);
+
+  const localizedTitle = pickLocalized(row.title, row, xlang, "title");
+  const title = isDefaultWeekTitle(localizedTitle)
+    ? defaultWeekTitle(xlang)
+    : localizedTitle;
+
+  return {
+    ...row,
+    title,
+    subtitle: pickLocalized(row.subtitle, row, xlang, "subtitle"),
+  };
+}
+
 function escapeHtml(s) {
   return String(s)
     .replaceAll("&", "&amp;")
@@ -458,21 +569,82 @@ function auth(req, res, next) {
   }
 }
 
+function requireSameOrigin(req, res, next) {
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return next();
+  if (!req.path.startsWith("/api/")) return next();
+
+  const origin = String(req.headers.origin || "").trim();
+  if (!origin) return next();
+
+  const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "http");
+  const host = req.get("host");
+  const self = `${proto}://${host}`;
+  if (origin === self) return next();
+  return res.status(403).json({ error: "Cross-origin request blocked" });
+}
+app.use(requireSameOrigin);
+
+const loginAttempts = new Map();
+function loginKey(req) {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown");
+  return ip.split(",")[0].trim();
+}
+function checkLoginRate(req) {
+  const key = loginKey(req);
+  const now = Date.now();
+  const row = loginAttempts.get(key);
+  if (!row) return { key, blocked: false };
+  if (row.blockUntil && row.blockUntil > now) return { key, blocked: true, retryAt: row.blockUntil };
+  if (row.blockUntil && row.blockUntil <= now) loginAttempts.delete(key);
+  return { key, blocked: false };
+}
+function markLoginFail(key) {
+  const now = Date.now();
+  const row = loginAttempts.get(key) || { fails: 0, firstAt: now, blockUntil: 0 };
+  if (now - row.firstAt > 15 * 60 * 1000) {
+    row.fails = 0;
+    row.firstAt = now;
+  }
+  row.fails += 1;
+  if (row.fails >= 10) {
+    row.blockUntil = now + 15 * 60 * 1000;
+  }
+  loginAttempts.set(key, row);
+}
+function clearLoginFail(key) {
+  loginAttempts.delete(key);
+}
+
 app.post("/api/auth/login", (req, res) => {
+  const rate = checkLoginRate(req);
+  if (rate.blocked) {
+    return res.status(429).json({ error: "Too many attempts. Try again later." });
+  }
   const { username, password } = req.body || {};
   if (
     username === process.env.ADMIN_USER &&
     password === process.env.ADMIN_PASS
   ) {
+    clearLoginFail(rate.key);
     const token = signToken();
-    setCookie(res, "admin_token", token, { maxAgeDays: 7, cookiePath: "/" });
-    return res.json({ token });
+    setCookie(res, "admin_token", token, {
+      maxAgeDays: 7,
+      cookiePath: "/",
+      sameSite: "Strict",
+      httpOnly: true,
+    });
+    return res.json({ ok: true });
   }
+  markLoginFail(rate.key);
   return res.status(401).json({ error: "Wrong credentials" });
 });
 
 app.post("/api/auth/logout", (req, res) => {
-  clearCookie(res, "admin_token", { cookiePath: "/" });
+  clearCookie(res, "admin_token", { cookiePath: "/", httpOnly: true });
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/me", auth, (req, res) => {
   res.json({ ok: true });
 });
 
@@ -548,6 +720,37 @@ function parseProductIds(raw) {
 function normalizeTranslateLang(v) {
   const x = String(v || "").toLowerCase().trim();
   return LANGS.has(x) ? x : "";
+}
+function toNonNegativeInt(v, { fallback = 0, max = 1_000_000 } = {}) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  const x = Math.trunc(n);
+  if (x < 0) return 0;
+  if (x > max) return max;
+  return x;
+}
+function toNullablePositiveInt(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  const x = Math.trunc(n);
+  return x > 0 ? x : null;
+}
+function trimMax(v, max = 2000) {
+  return String(v || "").trim().slice(0, max);
+}
+function normalizeWeekProductIds(v) {
+  const arr = Array.isArray(v) ? v : [];
+  const out = [];
+  const seen = new Set();
+  for (const raw of arr) {
+    const id = toNullablePositiveInt(raw);
+    if (!id || seen.has(id)) continue;
+    out.push(id);
+    seen.add(id);
+    if (out.length >= 100) break;
+  }
+  return out;
 }
 async function translateFree(text, from, to) {
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
@@ -818,23 +1021,23 @@ app.post("/api/products", auth, upload.single("image"), (req, res) => {
   const body = req.body || {};
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-  const titleBase = (body.title || "").trim();
-  const titleRo = (body.title_ro || "").trim();
-  const titleRu = (body.title_ru || "").trim();
-  const titleEn = (body.title_en || "").trim();
-  const descriptionBase = (body.description || "").trim();
-  const descriptionRo = (body.description_ro || "").trim();
-  const descriptionRu = (body.description_ru || "").trim();
-  const descriptionEn = (body.description_en || "").trim();
+  const titleBase = trimMax(body.title, 120);
+  const titleRo = trimMax(body.title_ro, 120);
+  const titleRu = trimMax(body.title_ru, 120);
+  const titleEn = trimMax(body.title_en, 120);
+  const descriptionBase = trimMax(body.description, 4000);
+  const descriptionRo = trimMax(body.description_ro, 4000);
+  const descriptionRu = trimMax(body.description_ru, 4000);
+  const descriptionEn = trimMax(body.description_en, 4000);
 
   const title = titleBase || titleRo || titleRu || titleEn;
   if (!title) return res.status(400).json({ error: "Title required" });
 
-  const price = Number(body.price || 0);
+  const price = toNonNegativeInt(body.price, { fallback: 0, max: 1_000_000 });
   const description = descriptionBase || descriptionRo || descriptionRu || descriptionEn;
-  const categoryId = body.categoryId ? Number(body.categoryId) : null;
+  const categoryId = toNullablePositiveInt(body.categoryId);
   const inStock = body.inStock === "0" ? 0 : 1;
-  const quantity = Number(body.quantity || 0);
+  const quantity = toNonNegativeInt(body.quantity, { fallback: 0, max: 1_000_000 });
   const isActive = body.isActive === "0" ? 0 : 1;
 
   db.run(
@@ -872,23 +1075,23 @@ app.put("/api/products/:id", auth, upload.single("image"), (req, res) => {
   const id = Number(req.params.id);
   const body = req.body || {};
 
-  const titleBase = (body.title || "").trim();
-  const titleRo = (body.title_ro || "").trim();
-  const titleRu = (body.title_ru || "").trim();
-  const titleEn = (body.title_en || "").trim();
-  const descriptionBase = (body.description || "").trim();
-  const descriptionRo = (body.description_ro || "").trim();
-  const descriptionRu = (body.description_ru || "").trim();
-  const descriptionEn = (body.description_en || "").trim();
+  const titleBase = trimMax(body.title, 120);
+  const titleRo = trimMax(body.title_ro, 120);
+  const titleRu = trimMax(body.title_ru, 120);
+  const titleEn = trimMax(body.title_en, 120);
+  const descriptionBase = trimMax(body.description, 4000);
+  const descriptionRo = trimMax(body.description_ro, 4000);
+  const descriptionRu = trimMax(body.description_ru, 4000);
+  const descriptionEn = trimMax(body.description_en, 4000);
 
   const title = titleBase || titleRo || titleRu || titleEn;
   if (!title) return res.status(400).json({ error: "Title required" });
 
-  const price = Number(body.price || 0);
+  const price = toNonNegativeInt(body.price, { fallback: 0, max: 1_000_000 });
   const description = descriptionBase || descriptionRo || descriptionRu || descriptionEn;
-  const categoryId = body.categoryId ? Number(body.categoryId) : null;
+  const categoryId = toNullablePositiveInt(body.categoryId);
   const inStock = body.inStock === "0" ? 0 : 1;
-  const quantity = Number(body.quantity || 0);
+  const quantity = toNonNegativeInt(body.quantity, { fallback: 0, max: 1_000_000 });
   const isActive = body.isActive === "0" ? 0 : 1;
 
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -981,9 +1184,25 @@ app.put("/api/products/:id/week-pick", auth, (req, res) => {
       const ensureActivePick = (cb) => {
         if (row) return cb(row);
         db.run(
-          `INSERT INTO week_picks(title, subtitle, productIds, isActive, updatedAt)
-           VALUES(?,?,?,?, datetime('now'))`,
-          ["Выбор недели", "", "[]", 1],
+          `INSERT INTO week_picks(
+             title, title_ro, title_ru, title_en,
+             subtitle, subtitle_ro, subtitle_ru, subtitle_en,
+             weekStart, weekEnd, productIds, isActive, updatedAt
+           ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?, datetime('now'))`,
+          [
+            defaultWeekTitle("ru"),
+            defaultWeekTitle("ro"),
+            defaultWeekTitle("ru"),
+            defaultWeekTitle("en"),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "[]",
+            1,
+          ],
           function (e2) {
             if (e2) return res.status(500).json({ error: e2.message });
             db.get(
@@ -1052,30 +1271,51 @@ app.get("/api/week-picks", auth, (req, res) => {
 });
 
 app.get("/api/public/week-picks/active", (req, res) => {
+  const lang = detectLang(req);
   db.get(
     "SELECT * FROM week_picks WHERE isActive=1 LIMIT 1",
     [],
     (err, row) => {
       if (err) return res.status(500).json({ error: err.message });
       if (!row) return res.json(null);
-      res.json({ ...row, productIds: parseProductIds(row.productIds) });
+      const normalized = {
+        ...row,
+        productIds: parseProductIds(row.productIds),
+      };
+      res.json(localizeWeekPickRow(normalized, lang));
     },
   );
 });
 
 app.post("/api/week-picks", auth, (req, res) => {
   const body = req.body || {};
-  const title = (body.title || "Выбор недели").trim();
-  const subtitle = (body.subtitle || "").trim();
-  const productIds = JSON.stringify(body.productIds || []);
+  const lang = detectLang(req);
+  const wp = normalizeWeekPickPayload(body, lang);
+  const productIds = JSON.stringify(normalizeWeekProductIds(body.productIds));
   const isActive = body.isActive ? 1 : 0;
 
   if (isActive) db.run("UPDATE week_picks SET isActive=0");
 
   db.run(
-    `INSERT INTO week_picks(title, subtitle, productIds, isActive, updatedAt)
-     VALUES(?,?,?,?, datetime('now'))`,
-    [title, subtitle, productIds, isActive],
+    `INSERT INTO week_picks(
+       title, title_ro, title_ru, title_en,
+       subtitle, subtitle_ro, subtitle_ru, subtitle_en,
+       weekStart, weekEnd, productIds, isActive, updatedAt
+     ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?, datetime('now'))`,
+    [
+      wp.title,
+      wp.title_ro,
+      wp.title_ru,
+      wp.title_en,
+      wp.subtitle,
+      wp.subtitle_ro,
+      wp.subtitle_ru,
+      wp.subtitle_en,
+      wp.weekStart,
+      wp.weekEnd,
+      productIds,
+      isActive,
+    ],
     function (err) {
       if (err) return res.status(400).json({ error: err.message });
       res.json({ id: this.lastID });
@@ -1086,18 +1326,35 @@ app.post("/api/week-picks", auth, (req, res) => {
 app.put("/api/week-picks/:id", auth, (req, res) => {
   const id = Number(req.params.id);
   const body = req.body || {};
-  const title = (body.title || "Выбор недели").trim();
-  const subtitle = (body.subtitle || "").trim();
-  const productIds = JSON.stringify(body.productIds || []);
+  const lang = detectLang(req);
+  const wp = normalizeWeekPickPayload(body, lang);
+  const productIds = JSON.stringify(normalizeWeekProductIds(body.productIds));
   const isActive = body.isActive ? 1 : 0;
 
   if (isActive) db.run("UPDATE week_picks SET isActive=0");
 
   db.run(
     `UPDATE week_picks
-     SET title=?, subtitle=?, productIds=?, isActive=?, updatedAt=datetime('now')
+     SET title=?, title_ro=?, title_ru=?, title_en=?,
+         subtitle=?, subtitle_ro=?, subtitle_ru=?, subtitle_en=?,
+         weekStart=?, weekEnd=?,
+         productIds=?, isActive=?, updatedAt=datetime('now')
      WHERE id=?`,
-    [title, subtitle, productIds, isActive, id],
+    [
+      wp.title,
+      wp.title_ro,
+      wp.title_ru,
+      wp.title_en,
+      wp.subtitle,
+      wp.subtitle_ro,
+      wp.subtitle_ru,
+      wp.subtitle_en,
+      wp.weekStart,
+      wp.weekEnd,
+      productIds,
+      isActive,
+      id,
+    ],
     function (err) {
       if (err) return res.status(400).json({ error: err.message });
       res.json({ ok: true, id });

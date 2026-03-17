@@ -13,6 +13,16 @@ function ensureProductsColumn(name, type, defSql = "") {
   });
 }
 
+function ensureWeekPicksColumn(name, type, defSql = "") {
+  db.all(`PRAGMA table_info(week_picks)`, [], (err, cols) => {
+    if (err) return;
+    const has = (cols || []).some((c) => String(c.name) === name);
+    if (has) return;
+    const sql = `ALTER TABLE week_picks ADD COLUMN ${name} ${type}${defSql ? ` ${defSql}` : ""}`;
+    db.run(sql);
+  });
+}
+
 export function initDb() {
   db.serialize(() => {
     db.run(`
@@ -59,7 +69,15 @@ export function initDb() {
             CREATE TABLE IF NOT EXISTS week_picks (
                                                       id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                       title TEXT NOT NULL DEFAULT 'Выбор недели',
+                                                      title_ro TEXT NOT NULL DEFAULT '',
+                                                      title_ru TEXT NOT NULL DEFAULT '',
+                                                      title_en TEXT NOT NULL DEFAULT '',
                                                       subtitle TEXT DEFAULT '',
+                                                      subtitle_ro TEXT NOT NULL DEFAULT '',
+                                                      subtitle_ru TEXT NOT NULL DEFAULT '',
+                                                      subtitle_en TEXT NOT NULL DEFAULT '',
+                                                      weekStart TEXT DEFAULT '',
+                                                      weekEnd TEXT DEFAULT '',
                                                       productIds TEXT NOT NULL DEFAULT '[]',
                                                       isActive INTEGER NOT NULL DEFAULT 0,
                                                       updatedAt TEXT DEFAULT (datetime('now'))
@@ -83,6 +101,14 @@ export function initDb() {
     ensureProductsColumn("description_ro", "TEXT", "NOT NULL DEFAULT ''");
     ensureProductsColumn("description_ru", "TEXT", "NOT NULL DEFAULT ''");
     ensureProductsColumn("description_en", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("title_ro", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("title_ru", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("title_en", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("subtitle_ro", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("subtitle_ru", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("subtitle_en", "TEXT", "NOT NULL DEFAULT ''");
+    ensureWeekPicksColumn("weekStart", "TEXT", "DEFAULT ''");
+    ensureWeekPicksColumn("weekEnd", "TEXT", "DEFAULT ''");
 
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_products_isWeekPick ON products(isWeekPick)`,

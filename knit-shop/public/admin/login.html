@@ -36,7 +36,7 @@
     </div>
 
     <script type="module">
-      import { api, setToken, qs } from "/admin/admin.js";
+      import { api, qs } from "/admin/admin.js";
 
       qs("#go").onclick = async () => {
         const msg = qs("#msg");
@@ -50,7 +50,6 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
           });
-          setToken(r.token);
           location.href = "/admin/products.html";
         } catch (e) {
           const msg = qs("#msg");
